@@ -2,10 +2,10 @@ import AVFoundation
 import Foundation
 
 class Coordinator {
-
+    
     let synthesizer: AVSpeechSynthesizer
     var player: AVAudioPlayer?
-
+    
     init() {
         let synthesizer = AVSpeechSynthesizer()
         self.synthesizer = synthesizer
@@ -20,7 +20,7 @@ class Coordinator {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         return paths[0].appendingPathComponent(soundName)
     }
-
+    
     func speakPhrase(phrase: String) {
         let utterance = AVSpeechUtterance(string: phrase)
         utterance.voice = AVSpeechSynthesisVoice(language: "en")
@@ -36,8 +36,8 @@ class Coordinator {
             
             player = try AVAudioPlayer(contentsOf: recordingPath, fileTypeHint: AVFileType.caf.rawValue)
             guard let player = player else {return}
-                
-                player.play()
+            
+            player.play()
         } catch {
             print("Error playing file.")
         }
@@ -49,6 +49,9 @@ class Coordinator {
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
         utterance.rate = 0.50
         
+        // Only create new file handle if `output` is nil.
+        var output: AVAudioFile?
+        
         synthesizer.write(utterance) { [self] (buffer: AVAudioBuffer) in
             guard let pcmBuffer = buffer as? AVAudioPCMBuffer else {
                 fatalError("unknown buffer type: \(buffer)")
@@ -56,14 +59,23 @@ class Coordinator {
             if pcmBuffer.frameLength == 0 {
                 // Done
             } else {
-                // append buffer to file
-                do {
-                    let audioFile = try AVAudioFile(forWriting: recordingPath, settings: pcmBuffer.format.settings, commonFormat: .pcmFormatInt16, interleaved: false)
-                    try audioFile.write(from: pcmBuffer)
-                } catch {
+                // this closure is called multiple times. so to save a complete audio, try create file handle only for once.
+                
+                do{
+                    if output == nil {
+                        try  output = AVAudioFile(
+                            forWriting: recordingPath,
+                            settings: pcmBuffer.format.settings,
+                            commonFormat: .pcmFormatInt16,
+                            interleaved: false)
+                    }
+                    try output?.write(from: pcmBuffer)
+                }catch {
                     print(error.localizedDescription)
                 }
+                
             }
+            
         }
     }
 }
