@@ -1,9 +1,4 @@
-//
-//  AppDelegate.swift
-//  73695767
-//
-//  Created by evilisn_jiang on 31/06/1401 AP.
-//
+
 
 import UIKit
 
