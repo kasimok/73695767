@@ -76,7 +76,7 @@ class Coordinator {
                         try  output = AVAudioFile(
                             forWriting: recordingPath,
                             settings: pcmBuffer.format.settings,
-                            commonFormat: .pcmFormatFloat32,
+                            commonFormat: pcmBuffer.format.commonFormat,
                             interleaved: false)
                     }
                     try output?.write(from: pcmBuffer)
